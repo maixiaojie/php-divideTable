@@ -1,12 +1,4 @@
 <?php
-/*
-*名称：php数据库分表插件
-*作者：simless
-*github地址：https://github.com/maixiaojie/PHP-DIVIDETABLE.git
-*欢迎fork，改进
-*
-*/
-
 
 class divideTable{
 	public $host;       //数据库主机名
@@ -23,7 +15,7 @@ class divideTable{
 	*函数名:__construct
 	*作者：Simless   
 	*日期：2016.04.04   
-	*功能：构造函数，初始化变量,根据需求来配置
+	*功能：构造函数，初始化变量,根据需求来 配置
 	*输入参数：无
 	*返回值：无 
 	*修改记录：
@@ -33,10 +25,10 @@ class divideTable{
 		$this->host = "localhost";
 		$this->user = "root";
 		$this->pwd = "cust_webexam";
-		$this->db = "test";
-		$this->table = "file";
-		$this->field = "filename";
-		$this->expect = range("A","Z");
+		$this->db = "misyota";
+		$this->table = "ura_items";
+		$this->field = "CategoryID";
+		$this->expect = range("0","9");
 		$this->pre = 'table';		
 	}
 	/*
@@ -116,9 +108,9 @@ class divideTable{
 			if($k != count($arr)-1){
 				$createSql .= ",";
 			} 
-			$createSql .="<br>";
+			// $createSql .="<br>";
 		}
-		$createSql .= ");";
+		$createSql .= ")";
 		return $createSql;
 	}
 	/*
@@ -129,11 +121,14 @@ class divideTable{
 	*输入参数：$expect,$pre,$arr
 	*参数含义：$expect---分割头信息配置数组，$pre---数据表前缀，$arr---含有表字段结构信息的数组
 	*返回值：
-	*修改记录：这块有点问题，创建的sql语句,query后执行error
+	*修改记录：这块有点问题，创建的sql语句,query后执行error(2016-04-05)
+	*          之前的错误原因是sql语句中加个了<br>。。。。。现在没问题了(2016-04-09)
 	*/
 	public function createTable($expect,$pre,$arr){
+		$Sql = Array();
 		for($i=0;$i<count($expect);$i++){
-			$this->query($this->createTableSql($arr,$pre.$expect[$i]));
+			 $Sql[$i] = $this->createTableSql($arr,$pre.$expect[$i]);
+			$this->query($Sql[$i]);
 		}
 	}
 	/*
@@ -149,9 +144,8 @@ class divideTable{
 	public function updateTable(){
 		for($i=0;$i<count($this->expect);$i++){
 			//insert into tableA select * from file where filename like A
-			$sql ="insert into ".$this->pre.$this->expect[$i]." select * from ".$this->table." where ".$this->field." like ".$this->expect[$i];
+			$sql ="insert into ".$this->pre.$this->expect[$i]." select * from ".$this->table." where ".$this->field." like '".$this->expect[$i]."%'";
 			$this->query($sql);
-			// echo $sql,"</br>";
 		}
 	}
 	/*
@@ -166,7 +160,7 @@ class divideTable{
 	*/
 	public function run(){
 		$this->connect();
-		$this->createTable($this->expect,$this->pre,$this->arr);
+		$this->createTable($this->expect,$this->pre,$this->getTableColumns());
 		$this->updateTable();
 		mysql_close();
 	}
